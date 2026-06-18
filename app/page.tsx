@@ -16,7 +16,6 @@ interface DiaryEntry {
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [currentDate, setCurrentDate] = useState(new Date());
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -149,13 +148,34 @@ export default function Home() {
     }
   };
 
+  const handlePrint = () => {
+    const printTitle = document.getElementById('printTitle');
+    if (printTitle) {
+      printTitle.innerText = `${year}년 ${month}월의 기록`;
+    }
+    window.print();
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
 
   return (
     <main className="min-h-screen bg-[#fafafa] text-gray-800 font-sans pb-20">
+      
+      {/* 🔽 인쇄 시 숨겨지는 상단 영역 🔽 */}
       <div className="print:hidden">
         <header className="pt-10 pb-6 text-center px-4">
           <h1 className="text-3xl font-bold text-gray-800 mb-3 tracking-tight">🐾 나의 소중한 추억 다이어리</h1>
+          
+          {/* ⭐️ 구글 애드센스 봇이 읽을 수 있는 공개 소개 영역 ⭐️ */}
+          <div className="max-w-2xl mx-auto mb-6 text-gray-600 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <p className="font-bold text-lg mb-2 text-gray-800">📸 일상을 특별하게 기록하세요</p>
+            <p className="text-sm leading-relaxed">
+              이곳은 소중한 사진과 추억을 캘린더 형태로 기록하고 관리하는 개인 웹 다이어리 서비스입니다.<br/>
+              암호화된 클라우드 스토리지를 통해 안전하게 보관하며, PDF로 출력하여 영구적으로 간직할 수 있습니다.<br/>
+              지금 로그인하여 당신의 오늘을 기록해 보세요.
+            </p>
+          </div>
+
           <div className="inline-block bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm mb-6">
             🔒 클라우드 보안 동기화 모드 작동 중
           </div>
@@ -187,7 +207,7 @@ export default function Home() {
                   {months.map((m) => <option key={m} value={m}>{m}월</option>)}
                 </select>
 
-                <button onClick={() => window.print()} className="bg-[#a29bfe] text-white px-5 py-2.5 rounded-lg font-bold shadow-sm hover:bg-[#8e85fc] transition">
+                <button onClick={handlePrint} className="bg-[#a29bfe] text-white px-5 py-2.5 rounded-lg font-bold shadow-sm hover:bg-[#8e85fc] transition">
                   🖨️ 현재 달 PDF로 출력
                 </button>
                 <button onClick={() => setIsDonateOpen(true)} className="bg-yellow-400 text-gray-900 px-5 py-2.5 rounded-full font-bold shadow-md hover:-translate-y-0.5 transition duration-200 flex items-center gap-2">
@@ -198,7 +218,6 @@ export default function Home() {
           ) : (
             // ---------------- [로그인 전 보여지는 보호 화면] ----------------
             <div className="mb-8">
-              <p className="text-gray-500 mb-6 text-sm font-medium">안전하게 암호화된 비공개 다이어리입니다.</p>
               <button onClick={handleGoogleLogin} className="bg-white border border-gray-300 px-8 py-3 rounded-lg font-bold shadow-sm hover:bg-gray-50 transition flex items-center gap-3 mx-auto text-gray-700">
                 <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
                 Google 계정으로 안전하게 로그인
@@ -206,7 +225,21 @@ export default function Home() {
             </div>
           )}
         </header>
+
+        {/* ⭐️ 구글 애드센스 광고판 위치 ⭐️ */}
+        <div className="max-w-4xl mx-auto px-4 my-6">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-pub-2476231295737523"
+               data-ad-slot="7521237689"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script dangerouslySetInnerHTML={{ __html: "(adsbygoogle = window.adsbygoogle || []).push({});" }} />
+        </div>
       </div>
+
+      {/* 🔽 인쇄 전용 타이틀 (출력할 때만 최상단에 나타납니다) 🔽 */}
+      <h1 id="printTitle" className="hidden print:block text-center text-3xl font-bold border-b-2 border-gray-800 pb-4 mb-10 pt-10"></h1>
 
       {/* ---------------- [메인 콘텐츠 렌더링 영역] ---------------- */}
       {user ? (
@@ -256,15 +289,12 @@ export default function Home() {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4 tracking-tight">비공개 다이어리입니다</h2>
           <p className="text-gray-500 mb-2 font-medium">
-            나만의 소중한 사진과 추억을 외부로부터 안전하게 보관하세요.
-          </p>
-          <p className="text-gray-400 text-sm">
-            로그인 후 전체 달력과 기록을 확인하고 작성할 수 있습니다.
+            로그인하여 숨겨진 캘린더와 소중한 기록들을 확인하세요.
           </p>
         </div>
       )}
 
-      {/* 모달 영역 (이전과 동일) */}
+      {/* 모달 영역 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 print:hidden">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
