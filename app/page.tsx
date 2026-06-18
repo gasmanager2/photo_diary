@@ -366,6 +366,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* ... 기존 모달 및 후원 모달 코드들 생략 ... */}
+      
+      {/* 🔽 이 하단 푸터 영역을 </main> 바로 위에 넣어주세요! 🔽 */}
+      <footer className="no-print mt-20 border-t border-gray-200 pt-6 pb-12 text-center text-xs text-gray-400">
+        <p className="mb-2">© {year} 나의 소중한 추억 다이어리. All rights reserved.</p>
+        <a href="/privacy" className="text-gray-500 hover:underline font-bold mx-2">
+          개인정보처리방침
+        </a>
+      </footer>
+
     </main>
   );
 }
