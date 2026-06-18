@@ -238,8 +238,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 🔽 인쇄 전용 타이틀 (출력할 때만 최상단에 나타납니다) 🔽 */}
-      <h1 id="printTitle" className="hidden print:block text-center text-3xl font-bold border-b-2 border-gray-800 pb-4 mb-10 pt-10"></h1>
+{/* 🔽 인쇄 여백 강제 축소 및 인쇄 전용 타이틀 🔽 */}
+      <style dangerouslySetInnerHTML={{__html: `@media print { @page { margin: 10mm; } }`}} />
+      <h1 id="printTitle" className="hidden print:block text-center text-2xl font-bold border-b-2 border-gray-800 pb-2 mb-4 pt-4"></h1>
 
       {/* ---------------- [메인 콘텐츠 렌더링 영역] ---------------- */}
       {user ? (
@@ -253,7 +254,7 @@ export default function Home() {
             ))}
 
             {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[80px]"></div>
+              <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[70px] print:h-[12vh]"></div>
             ))}
 
             {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -265,7 +266,7 @@ export default function Home() {
                 <div 
                   key={dayNum} 
                   onClick={() => openModal(dayNum)}
-                  className="bg-white border border-gray-200 rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:min-h-[100px] print:shadow-none print:break-inside-avoid"
+                  className="bg-white border border-gray-200 rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:min-h-[70px] print:h-[12vh] print:p-1 print:shadow-none print:break-inside-avoid"
                 >
                   <span className="font-bold text-gray-700 z-10">{dayNum}</span>
                   {diary?.imageUrl && (
