@@ -161,6 +161,14 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#fafafa] text-gray-800 font-sans pb-20">
       
+      {/* 🔽 인쇄 안전 여백 확보, 가로 모드 최적화 설정 🔽 */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print { 
+          @page { size: landscape; margin: 15mm; } 
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+      `}} />
+
       {/* 🔽 인쇄 시 숨겨지는 상단 영역 🔽 */}
       <div className="print:hidden">
         <header className="pt-10 pb-6 text-center px-4">
@@ -238,15 +246,14 @@ export default function Home() {
         </div>
       </div>
 
-{/* 🔽 인쇄 여백 강제 축소 및 인쇄 전용 타이틀 🔽 */}
-      <style dangerouslySetInnerHTML={{__html: `@media print { @page { margin: 10mm; } }`}} />
-      <h1 id="printTitle" className="hidden print:block text-center text-2xl font-bold border-b-2 border-gray-800 pb-2 mb-4 pt-4"></h1>
+      {/* 🔽 인쇄 전용 타이틀 (출력할 때만 최상단에 나타납니다) 🔽 */}
+      <h1 id="printTitle" className="hidden print:block text-center text-2xl font-bold border-b-2 border-gray-800 pb-3 mb-4 mt-2 print:mx-4"></h1>
 
       {/* ---------------- [메인 콘텐츠 렌더링 영역] ---------------- */}
       {user ? (
-        // 1. 로그인 성공 시: 달력 그리드 노출
-        <div className="max-w-5xl mx-auto px-4 print:max-w-none print:px-0 animate-in fade-in duration-500">
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+        // 1. 로그인 성공 시: 달력 그리드 노출 (인쇄 시 여백 및 폭 최적화)
+        <div className="max-w-5xl mx-auto px-4 print:max-w-none print:px-4 print:w-full box-border animate-in fade-in duration-500">
+          <div className="grid grid-cols-7 gap-2 sm:gap-3 print:gap-2">
             {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
               <div key={day} className={`text-center font-bold p-2 bg-yellow-100 rounded-lg shadow-sm print:shadow-none print:bg-gray-100 ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
                 {day}
