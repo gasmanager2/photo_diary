@@ -162,12 +162,20 @@ export default function Home() {
     <main className="min-h-screen bg-[#fafafa] text-gray-800 font-sans pb-20">
       
       {/* 🔽 인쇄 안전 여백 확보, 가로 모드 최적화 설정 🔽 */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print { 
-          @page { size: landscape; margin: 15mm; } 
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-      `}} />
+<style dangerouslySetInnerHTML={{__html: `
+  @media print { 
+    @page { size: A4 portrait; margin: 10mm; } 
+    /* 달력 그리드 전체 높이를 A4 용지에 맞게 강제 제한 */
+    .print-calendar-grid { 
+      height: 85vh !important; 
+    }
+    /* 달력 칸의 높이를 줄임 */
+    .print-day-cell { 
+      min-height: auto !important; 
+      height: 10vh !important; 
+    }
+  }
+`}} />
 
       {/* 🔽 인쇄 시 숨겨지는 상단 영역 🔽 */}
       <div className="print:hidden">
@@ -273,7 +281,7 @@ export default function Home() {
                 <div 
                   key={dayNum} 
                   onClick={() => openModal(dayNum)}
-                  className="bg-white border border-gray-200 rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:min-h-[70px] print:h-[12vh] print:p-1 print:shadow-none print:break-inside-avoid"
+                  className="bg-white border border-gray-200 rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print-day-cell print:shadow-none print:break-inside-avoid"
                 >
                   <span className="font-bold text-gray-700 z-10">{dayNum}</span>
                   {diary?.imageUrl && (
