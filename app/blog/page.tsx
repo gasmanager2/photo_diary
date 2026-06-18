@@ -1,4 +1,3 @@
-// app/blog/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -14,7 +13,6 @@ interface Post {
   settings?: string;
 }
 
-// 구글 로봇이 상시 읽어갈 수 있도록 배치한 풍부한 분량의 정보성 샘플 데이터
 const SAMPLE_POSTS: Post[] = [
   {
     id: "sample-1",
@@ -45,7 +43,16 @@ const SAMPLE_POSTS: Post[] = [
 export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>(SAMPLE_POSTS);
 
-  // 추후 파이어베이스에서 공개 게시글을 동적으로 관리하고 싶을 때를 위한 확장 영역
+  // ⭐️ 블로그 페이지 접속 시 애드센스를 호출하도록 추가 ⭐️
+  useEffect(() => {
+    try {
+      const adsbygoogle = (window as any).adsbygoogle || [];
+      adsbygoogle.push({});
+    } catch (e) {
+      console.error("AdSense error:", e);
+    }
+  }, []);
+
   useEffect(() => {
     const q = query(collection(db, "public_posts"), orderBy("date", "desc"), limit(20));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -74,7 +81,17 @@ export default function BlogPage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 mt-12">
+      {/* ⭐️ 구글 애드센스 광고판 (블로그용) ⭐️ */}
+      <div className="max-w-4xl mx-auto px-4 mt-8 mb-4">
+        <ins className="adsbygoogle"
+             style={{ display: 'block' }}
+             data-ad-client="ca-pub-2476231295737523"
+             data-ad-slot="7521237689"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 mt-4">
         <div className="space-y-8">
           {posts.map((post) => (
             <article key={post.id} className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm hover:shadow-md transition-shadow">
