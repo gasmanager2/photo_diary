@@ -299,14 +299,22 @@ export default function Home() {
         </div>
       ) : (
         // 2. 비로그인 시: 달력을 감추고 자물쇠 보안 화면 노출
-        <div className="max-w-lg mx-auto mt-10 px-4 py-20 text-center bg-white rounded-2xl border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500">
+        <div className="max-w-lg mx-auto mt-10 px-4 py-16 text-center bg-white rounded-2xl border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500 no-print">
           <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner border border-gray-100">
             🔒
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 tracking-tight">비공개 다이어리입니다</h2>
-          <p className="text-gray-500 mb-2 font-medium">
-            로그인하여 숨겨진 캘린더와 소중한 기록들을 확인하세요.
+          <h2 className="text-2xl font-bold text-gray-800 mb-3 tracking-tight">비공개 다이어리입니다</h2>
+          <p className="text-gray-500 mb-8 font-medium text-sm leading-relaxed">
+            개인용 일지는 로그인 후 확인하실 수 있습니다.<br/>
+            구글 로봇 및 일반 방문자께서는 아래의 공개 출사 갤러리 페이지를 방문해 주세요!
           </p>
+          
+          {/* 🔽 구글 로봇이 타고 들어갈 핵심 통로 크롤링 버튼 🔽 */}
+          <div className="pt-6 border-t border-gray-100">
+            <a href="/blog" className="inline-flex items-center justify-center bg-blue-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-600 transition w-full">
+              📸 공개 사진 정보 블로그 보러가기
+            </a>
+          </div>
         </div>
       )}
 
