@@ -36,15 +36,20 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // ⭐️ 로그인 상태일 때만 애드센스를 호출하도록 수정 ⭐️
+  // 로그인 상태일 때 양옆 광고 2개를 안전하게 호출
   useEffect(() => {
     if (user) {
-      try {
-        const adsbygoogle = (window as any).adsbygoogle || [];
-        adsbygoogle.push({});
-      } catch (e) {
-        console.error("AdSense error:", e);
-      }
+      const timer = setTimeout(() => {
+        try {
+          const ads = document.querySelectorAll('.adsbygoogle:not([data-adsbygoogle-status="done"])');
+          ads.forEach(() => {
+            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+          });
+        } catch (e) {
+          console.error("AdSense error:", e);
+        }
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -248,81 +253,96 @@ export default function Home() {
       <h1 id="printTitle" className="hidden print:block text-center text-3xl font-serif font-bold border-b-4 border-gray-800 pb-3 mb-6 mt-2 print:mx-4"></h1>
 
       {user ? (
-        <div className="max-w-5xl mx-auto px-4 print:max-w-none print:px-4 print:w-full box-border animate-in fade-in duration-500">
+        <div className="flex flex-col xl:flex-row justify-center gap-6 max-w-[1400px] mx-auto px-4 print:max-w-none print:block print:px-4 print:w-full box-border animate-in fade-in duration-500">
           
-          {/* ⭐️ 구글 애드센스 광고판을 달력이 있는 '콘텐츠 화면' 안쪽으로 이동시켰습니다! ⭐️ */}
-          <div className="max-w-4xl mx-auto my-6 no-print">
+          {/* 1. 왼쪽 (또는 상단) 광고판 */}
+          <aside className="w-full xl:w-[200px] flex-shrink-0 no-print">
             <ins className="adsbygoogle"
                  style={{ display: 'block' }}
                  data-ad-client="ca-pub-2476231295737523"
                  data-ad-slot="7521237689"
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
-          </div>
+          </aside>
 
-          <div className="grid grid-cols-7 gap-2 sm:gap-3 print:gap-1 print-calendar-grid">
-            {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-              <div key={day} className={`text-center font-bold p-2 bg-yellow-100 rounded-lg shadow-sm print:shadow-none print:bg-gray-100 print:rounded-none ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
-                {day}
-              </div>
-            ))}
-
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[13vh]"></div>
-            ))}
-
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const dayNum = i + 1;
-              const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-              const diary = diaryMap[dateStr];
-              
-              const isToday = isCurrentMonth && dayNum === todayDate;
-
-              return (
-                <div 
-                  key={dayNum} 
-                  onClick={() => openModal(dayNum)}
-                  className={`bg-white border rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:rounded-none print:min-h-[13vh] print:h-auto print:p-1 print:shadow-none print:break-inside-avoid ${isToday ? 'border-2 border-blue-400 ring-2 ring-blue-100 bg-blue-50/30' : 'border-gray-200'}`}
-                >
-                  <span className={`font-bold z-10 ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center text-sm print:bg-transparent print:w-auto print:text-gray-700' : 'text-gray-700'}`}>
-                    {dayNum}
-                  </span>
-                  
-                  {diary?.imageUrl && (
-                    <img src={diary.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 z-0 print:opacity-40" />
-                  )}
-                  {diary?.content && (
-                    <div className="mt-auto z-10 bg-white/85 backdrop-blur-sm px-1.5 py-1 rounded text-xs font-bold text-gray-800 truncate print:bg-white/95 print:whitespace-pre-wrap">
-                      {diary.content}
-                    </div>
-                  )}
+          {/* 2. 중앙 메인 콘텐츠 (달력 및 일지) */}
+          <div className="flex-1 w-full max-w-5xl">
+            {/* 달력 그리드 */}
+            <div className="grid grid-cols-7 gap-2 sm:gap-3 print:gap-1 print-calendar-grid">
+              {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
+                <div key={day} className={`text-center font-bold p-2 bg-yellow-100 rounded-lg shadow-sm print:shadow-none print:bg-gray-100 print:rounded-none ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
+                  {day}
                 </div>
-              );
-            })}
+              ))}
+
+              {Array.from({ length: firstDay }).map((_, i) => (
+                <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[13vh]"></div>
+              ))}
+
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                const diary = diaryMap[dateStr];
+                
+                const isToday = isCurrentMonth && dayNum === todayDate;
+
+                return (
+                  <div 
+                    key={dayNum} 
+                    onClick={() => openModal(dayNum)}
+                    className={`bg-white border rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:rounded-none print:min-h-[13vh] print:h-auto print:p-1 print:shadow-none print:break-inside-avoid ${isToday ? 'border-2 border-blue-400 ring-2 ring-blue-100 bg-blue-50/30' : 'border-gray-200'}`}
+                  >
+                    <span className={`font-bold z-10 ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center text-sm print:bg-transparent print:w-auto print:text-gray-700' : 'text-gray-700'}`}>
+                      {dayNum}
+                    </span>
+                    
+                    {diary?.imageUrl && (
+                      <img src={diary.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 z-0 print:opacity-40" />
+                    )}
+                    {diary?.content && (
+                      <div className="mt-auto z-10 bg-white/85 backdrop-blur-sm px-1.5 py-1 rounded text-xs font-bold text-gray-800 truncate print:bg-white/95 print:whitespace-pre-wrap">
+                        {diary.content}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 상세 일지 리스트 */}
+            <div className="mt-12 print:mt-0 pb-10 print-journal-section">
+              <h2 className="text-2xl font-bold mb-6 border-l-4 border-gray-800 pl-3 print:text-xl">이달의 상세 일지</h2>
+              
+              {currentMonthEntries.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {currentMonthEntries.map((entry) => (
+                    <div key={entry.dateStr} className="record-card shadow-sm hover:shadow-md transition-shadow">
+                      {entry.imageUrl && <img src={entry.imageUrl} className="record-image" alt="기록" />}
+                      <div className="flex-1 flex flex-col justify-center">
+                        <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-2">{entry.dateStr}의 기록</h3>
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500 font-medium">
+                  📭 아직 기록된 추억이 없습니다. 달력의 날짜를 클릭해 기록을 추가해 보세요!
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="mt-12 print:mt-0 pb-10 print-journal-section">
-            <h2 className="text-2xl font-bold mb-6 border-l-4 border-gray-800 pl-3 print:text-xl">이달의 상세 일지</h2>
-            
-            {currentMonthEntries.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {currentMonthEntries.map((entry) => (
-                  <div key={entry.dateStr} className="record-card shadow-sm hover:shadow-md transition-shadow">
-                    {entry.imageUrl && <img src={entry.imageUrl} className="record-image" alt="기록" />}
-                    <div className="flex-1 flex flex-col justify-center">
-                      <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-2">{entry.dateStr}의 기록</h3>
-                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500 font-medium">
-                📭 아직 기록된 추억이 없습니다. 달력의 날짜를 클릭해 기록을 추가해 보세요!
-              </div>
-            )}
-          </div>
-          
+          {/* 3. 오른쪽 (또는 하단) 광고판 */}
+          <aside className="w-full xl:w-[200px] flex-shrink-0 no-print">
+            <ins className="adsbygoogle"
+                 style={{ display: 'block' }}
+                 data-ad-client="ca-pub-2476231295737523"
+                 data-ad-slot="7521237689"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+          </aside>
+
         </div>
       ) : (
         <div className="max-w-lg mx-auto mt-10 px-4 py-16 text-center bg-white rounded-2xl border border-gray-200 shadow-sm animate-in fade-in zoom-in-95 duration-500 no-print">
@@ -343,7 +363,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 모달 등 하단 공통 영역 생략 (기존과 동일) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">

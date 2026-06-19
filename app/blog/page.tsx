@@ -43,14 +43,19 @@ const SAMPLE_POSTS: Post[] = [
 export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>(SAMPLE_POSTS);
 
-  // ⭐️ 블로그 페이지 접속 시 애드센스를 호출하도록 추가 ⭐️
+  // ⭐️ 블로그 페이지 접속 시 양옆 2개의 광고를 안전하게 호출 ⭐️
   useEffect(() => {
-    try {
-      const adsbygoogle = (window as any).adsbygoogle || [];
-      adsbygoogle.push({});
-    } catch (e) {
-      console.error("AdSense error:", e);
-    }
+    const timer = setTimeout(() => {
+      try {
+        const ads = document.querySelectorAll('.adsbygoogle:not([data-adsbygoogle-status="done"])');
+        ads.forEach(() => {
+          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        });
+      } catch (e) {
+        console.error("AdSense error:", e);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -81,34 +86,50 @@ export default function BlogPage() {
         </div>
       </header>
 
-      {/* ⭐️ 구글 애드센스 광고판 (블로그용) ⭐️ */}
-      <div className="max-w-4xl mx-auto px-4 mt-8 mb-4">
-        <ins className="adsbygoogle"
-             style={{ display: 'block' }}
-             data-ad-client="ca-pub-2476231295737523"
-             data-ad-slot="7521237689"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-      </div>
+      {/* ⭐️ 양옆 광고와 블로그 콘텐츠를 감싸는 영역 (PC는 가로, 모바일은 세로 자동 정렬) ⭐️ */}
+      <div className="flex flex-col lg:flex-row justify-center gap-6 max-w-[1200px] mx-auto px-4 mt-8 mb-8">
+        
+        {/* 1. 왼쪽 (또는 상단) 광고 */}
+        <aside className="w-full lg:w-[200px] flex-shrink-0">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-pub-2476231295737523"
+               data-ad-slot="7521237689"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </aside>
 
-      <div className="max-w-4xl mx-auto px-4 mt-4">
-        <div className="space-y-8">
-          {posts.map((post) => (
-            <article key={post.id} className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-md">{post.category}</span>
-                <time className="text-xs text-gray-400">{post.date}</time>
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">{post.title}</h2>
-              <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
-              {post.settings && (
-                <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-500 font-mono">
-                  ⚙️ {post.settings}
+        {/* 2. 중앙 블로그 글 목록 */}
+        <div className="flex-1 w-full max-w-3xl">
+          <div className="space-y-8">
+            {posts.map((post) => (
+              <article key={post.id} className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-md">{post.category}</span>
+                  <time className="text-xs text-gray-400">{post.date}</time>
                 </div>
-              )}
-            </article>
-          ))}
+                <h2 className="text-xl font-bold text-gray-900 mb-3 tracking-tight">{post.title}</h2>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
+                {post.settings && (
+                  <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-500 font-mono">
+                    ⚙️ {post.settings}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
         </div>
+
+        {/* 3. 오른쪽 (또는 하단) 광고 */}
+        <aside className="w-full lg:w-[200px] flex-shrink-0">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-pub-2476231295737523"
+               data-ad-slot="7521237689"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+        </aside>
+
       </div>
     </main>
   );
