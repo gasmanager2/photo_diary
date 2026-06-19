@@ -11,6 +11,8 @@ interface DiaryEntry {
   dateStr: string;
   content: string;
   imageUrl: string | null;
+  mood?: string;    // ⭐️ 기분 데이터 추가
+  weather?: string; // ⭐️ 날씨 데이터 추가
 }
 
 export default function Home() {
@@ -24,7 +26,10 @@ export default function Home() {
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [mood, setMood] = useState("");       // ⭐️ 기분 상태
+  const [weather, setWeather] = useState(""); // ⭐️ 날씨 상태
   const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // ⭐️ 검색어 상태
 
   const [diaryMap, setDiaryMap] = useState<Record<string, DiaryEntry>>({});
 
@@ -36,7 +41,6 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // 로그인 상태일 때 양옆 광고 2개를 안전하게 호출
   useEffect(() => {
     if (user) {
       const timer = setTimeout(() => {
@@ -105,6 +109,8 @@ export default function Home() {
     const existingDiary = diaryMap[dateStr];
     setContent(existingDiary?.content || "");
     setPreviewUrl(existingDiary?.imageUrl || null);
+    setMood(existingDiary?.mood || "");       // 기존 기분 불러오기
+    setWeather(existingDiary?.weather || ""); // 기존 날씨 불러오기
     setImageFile(null);
     setIsModalOpen(true);
   };
@@ -114,6 +120,8 @@ export default function Home() {
     setContent("");
     setImageFile(null);
     setPreviewUrl(null);
+    setMood("");
+    setWeather("");
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +153,8 @@ export default function Home() {
         dateStr: selectedDateStr,
         content: content,
         imageUrl: finalImageUrl || null,
+        mood: mood || null,       // DB에 기분 저장
+        weather: weather || null, // DB에 날씨 저장
         updatedAt: new Date(),
       });
 
@@ -180,6 +190,14 @@ export default function Home() {
   const currentMonthEntries = Object.values(diaryMap)
     .filter(entry => entry?.dateStr?.startsWith(`${year}-${String(month).padStart(2, "0")}`))
     .sort((a, b) => (a?.dateStr || "").localeCompare(b?.dateStr || ""));
+
+  // ⭐️ 검색 결과 필터링 로직 ⭐️
+  const searchResults = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    return Object.values(diaryMap)
+      .filter(entry => entry?.content?.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => (b?.dateStr || "").localeCompare(a?.dateStr || "")); // 최신순 정렬
+  }, [diaryMap, searchTerm]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
 
@@ -238,6 +256,27 @@ export default function Home() {
                   ☕ 개발자에게 커피 후원
                 </button>
               </div>
+
+              {/* ⭐️ 검색창 UI 추가 ⭐️ */}
+              <div className="max-w-xl mx-auto mb-8 px-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className="text-gray-400">🔍</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="기억하고 싶은 추억을 검색해 보세요 (예: 여행, 생일)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm text-sm"
+                  />
+                  {searchTerm && (
+                    <button onClick={() => setSearchTerm("")} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 font-bold">
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
             </>
           ) : (
             <div className="mb-8">
@@ -255,7 +294,6 @@ export default function Home() {
       {user ? (
         <div className="flex flex-col xl:flex-row justify-center gap-6 max-w-[1400px] mx-auto px-4 print:max-w-none print:block print:px-4 print:w-full box-border animate-in fade-in duration-500">
           
-          {/* 1. 왼쪽 (또는 상단) 광고판 */}
           <aside className="w-full xl:w-[200px] flex-shrink-0 no-print">
             <ins className="adsbygoogle"
                  style={{ display: 'block' }}
@@ -265,75 +303,111 @@ export default function Home() {
                  data-full-width-responsive="true"></ins>
           </aside>
 
-          {/* 2. 중앙 메인 콘텐츠 (달력 및 일지) */}
           <div className="flex-1 w-full max-w-5xl">
-            {/* 달력 그리드 */}
-            <div className="grid grid-cols-7 gap-2 sm:gap-3 print:gap-1 print-calendar-grid">
-              {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-                <div key={day} className={`text-center font-bold p-2 bg-yellow-100 rounded-lg shadow-sm print:shadow-none print:bg-gray-100 print:rounded-none ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
-                  {day}
-                </div>
-              ))}
-
-              {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[13vh]"></div>
-              ))}
-
-              {Array.from({ length: daysInMonth }).map((_, i) => {
-                const dayNum = i + 1;
-                const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-                const diary = diaryMap[dateStr];
+            {/* ⭐️ 검색 중일 때는 캘린더를 숨기고 검색 결과만 보여줍니다 ⭐️ */}
+            {searchTerm ? (
+              <div className="mb-10 min-h-[40vh] bg-white p-6 rounded-2xl border border-blue-100 shadow-sm animate-in slide-in-from-bottom-4 duration-300">
+                <h2 className="text-xl font-bold mb-6 text-blue-600 border-b pb-3">
+                  "{searchTerm}" 검색 결과 ({searchResults.length}건)
+                </h2>
                 
-                const isToday = isCurrentMonth && dayNum === todayDate;
-
-                return (
-                  <div 
-                    key={dayNum} 
-                    onClick={() => openModal(dayNum)}
-                    className={`bg-white border rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:rounded-none print:min-h-[13vh] print:h-auto print:p-1 print:shadow-none print:break-inside-avoid ${isToday ? 'border-2 border-blue-400 ring-2 ring-blue-100 bg-blue-50/30' : 'border-gray-200'}`}
-                  >
-                    <span className={`font-bold z-10 ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center text-sm print:bg-transparent print:w-auto print:text-gray-700' : 'text-gray-700'}`}>
-                      {dayNum}
-                    </span>
-                    
-                    {diary?.imageUrl && (
-                      <img src={diary.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 z-0 print:opacity-40" />
-                    )}
-                    {diary?.content && (
-                      <div className="mt-auto z-10 bg-white/85 backdrop-blur-sm px-1.5 py-1 rounded text-xs font-bold text-gray-800 truncate print:bg-white/95 print:whitespace-pre-wrap">
-                        {diary.content}
+                {searchResults.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    {searchResults.map((entry) => (
+                      <div key={entry.dateStr} className="flex gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                        {entry.imageUrl && <img src={entry.imageUrl} className="w-24 h-24 object-cover rounded-lg border border-gray-200" alt="기록" />}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-gray-900">{entry.dateStr}</h3>
+                            <div className="text-sm">{entry.mood} {entry.weather}</div>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-3 whitespace-pre-wrap">{entry.content}</p>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-
-            {/* 상세 일지 리스트 */}
-            <div className="mt-12 print:mt-0 pb-10 print-journal-section">
-              <h2 className="text-2xl font-bold mb-6 border-l-4 border-gray-800 pl-3 print:text-xl">이달의 상세 일지</h2>
-              
-              {currentMonthEntries.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  {currentMonthEntries.map((entry) => (
-                    <div key={entry.dateStr} className="record-card shadow-sm hover:shadow-md transition-shadow">
-                      {entry.imageUrl && <img src={entry.imageUrl} className="record-image" alt="기록" />}
-                      <div className="flex-1 flex flex-col justify-center">
-                        <h3 className="font-bold text-lg text-gray-900 border-b pb-2 mb-2">{entry.dateStr}의 기록</h3>
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
-                      </div>
+                ) : (
+                  <div className="text-center py-10 text-gray-400">검색 결과가 없습니다.</div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* 검색 중이 아닐 때만 캘린더와 월별 리스트 출력 */}
+                <div className="grid grid-cols-7 gap-2 sm:gap-3 print:gap-1 print-calendar-grid">
+                  {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
+                    <div key={day} className={`text-center font-bold p-2 bg-yellow-100 rounded-lg shadow-sm print:shadow-none print:bg-gray-100 print:rounded-none ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
+                      {day}
                     </div>
                   ))}
+
+                  {Array.from({ length: firstDay }).map((_, i) => (
+                    <div key={`empty-${i}`} className="bg-transparent border-none min-h-[120px] print:min-h-[13vh]"></div>
+                  ))}
+
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+                    const diary = diaryMap[dateStr];
+                    const isToday = isCurrentMonth && dayNum === todayDate;
+
+                    return (
+                      <div 
+                        key={dayNum} 
+                        onClick={() => openModal(dayNum)}
+                        className={`bg-white border rounded-xl min-h-[120px] p-2 relative overflow-hidden flex flex-col cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-md print:rounded-none print:min-h-[13vh] print:h-auto print:p-1 print:shadow-none print:break-inside-avoid ${isToday ? 'border-2 border-blue-400 ring-2 ring-blue-100 bg-blue-50/30' : 'border-gray-200'}`}
+                      >
+                        <span className={`font-bold z-10 ${isToday ? 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center text-sm print:bg-transparent print:w-auto print:text-gray-700' : 'text-gray-700'}`}>
+                          {dayNum}
+                        </span>
+                        
+                        {/* ⭐️ 캘린더 칸 우측 상단에 스탬프 표시 ⭐️ */}
+                        <div className="absolute top-2 right-2 flex gap-0.5 text-sm z-10 print:hidden opacity-80">
+                          <span>{diary?.mood}</span>
+                          <span>{diary?.weather}</span>
+                        </div>
+
+                        {diary?.imageUrl && (
+                          <img src={diary.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 z-0 print:opacity-40" />
+                        )}
+                        {diary?.content && (
+                          <div className="mt-auto z-10 bg-white/85 backdrop-blur-sm px-1.5 py-1 rounded text-xs font-bold text-gray-800 truncate print:bg-white/95 print:whitespace-pre-wrap">
+                            {diary.content}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500 font-medium">
-                  📭 아직 기록된 추억이 없습니다. 달력의 날짜를 클릭해 기록을 추가해 보세요!
+
+                <div className="mt-12 print:mt-0 pb-10 print-journal-section">
+                  <h2 className="text-2xl font-bold mb-6 border-l-4 border-gray-800 pl-3 print:text-xl">이달의 상세 일지</h2>
+                  
+                  {currentMonthEntries.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      {currentMonthEntries.map((entry) => (
+                        <div key={entry.dateStr} className="record-card shadow-sm hover:shadow-md transition-shadow">
+                          {entry.imageUrl && <img src={entry.imageUrl} className="record-image" alt="기록" />}
+                          <div className="flex-1 flex flex-col justify-center">
+                            <div className="flex items-center gap-2 border-b pb-2 mb-2">
+                              <h3 className="font-bold text-lg text-gray-900">{entry.dateStr}의 기록</h3>
+                              {/* ⭐️ 상세 리스트 제목 옆에도 스탬프 표시 ⭐️ */}
+                              <span className="text-lg">{entry.mood} {entry.weather}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500 font-medium">
+                      📭 아직 기록된 추억이 없습니다. 달력의 날짜를 클릭해 기록을 추가해 보세요!
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
 
-          {/* 3. 오른쪽 (또는 하단) 광고판 */}
           <aside className="w-full xl:w-[200px] flex-shrink-0 no-print">
             <ins className="adsbygoogle"
                  style={{ display: 'block' }}
@@ -354,7 +428,6 @@ export default function Home() {
             개인용 일지는 로그인 후 확인하실 수 있습니다.<br/>
             구글 로봇 및 일반 방문자께서는 아래의 공개 출사 갤러리 페이지를 방문해 주세요!
           </p>
-          
           <div className="pt-6 border-t border-gray-100">
             <a href="/blog" className="inline-flex items-center justify-center bg-blue-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:bg-blue-600 transition w-full">
               📸 공개 사진 정보 블로그 보러가기
@@ -363,14 +436,36 @@ export default function Home() {
         </div>
       )}
 
+      {/* 🔽 모달 영역 (스탬프 입력 기능 추가) 🔽 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <h2 className="text-xl font-bold border-b pb-3 mb-4 text-gray-800">
-              {selectedDateStr.split('-')[0]}년 {selectedDateStr.split('-')[1]}월 {selectedDateStr.split('-')[2]}일의 기록
+              {selectedDateStr.split('-')[0]}년 {selectedDateStr.split('-')[1]}월 {selectedDateStr.split('-')[2]}일
             </h2>
+
+            {/* ⭐️ 기분/날씨 선택 영역 ⭐️ */}
+            <div className="flex gap-4 mb-5">
+              <div className="flex-1">
+                <label className="block font-bold text-xs mb-2 text-gray-500">감정 스탬프</label>
+                <div className="flex justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                  {['😊', '🥳', '😌', '😢', '😡'].map(m => (
+                    <button key={m} onClick={() => setMood(mood === m ? "" : m)} className={`text-xl p-1 rounded-md transition-all ${mood === m ? 'bg-white shadow ring-1 ring-gray-200 scale-110' : 'opacity-50 hover:opacity-100'}`}>{m}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1">
+                <label className="block font-bold text-xs mb-2 text-gray-500">날씨 스탬프</label>
+                <div className="flex justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                  {['☀️', '☁️', '☔', '❄️'].map(w => (
+                    <button key={w} onClick={() => setWeather(weather === w ? "" : w)} className={`text-xl p-1 rounded-md transition-all ${weather === w ? 'bg-white shadow ring-1 ring-gray-200 scale-110' : 'opacity-50 hover:opacity-100'}`}>{w}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="mb-4">
-              <label className="block font-bold text-sm mb-2 text-gray-700">📸 사진 첨부 (최대 1.5MB 자동 압축)</label>
+              <label className="block font-bold text-sm mb-2 text-gray-700">📸 사진 첨부</label>
               <input type="file" accept="image/*" onChange={handleImageChange} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-3"/>
               {previewUrl && (
                 <div className="rounded-lg overflow-hidden bg-gray-100 max-h-48 flex items-center justify-center">
@@ -383,8 +478,8 @@ export default function Home() {
               <textarea 
                 value={content} 
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="오늘 하루는 어땠나요? 소중한 순간을 기록하세요." 
-                className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-32 text-sm bg-gray-50"
+                placeholder="오늘 하루는 어땠나요?" 
+                className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-28 text-sm bg-gray-50"
               />
             </div>
             <div className="flex justify-end gap-2">
